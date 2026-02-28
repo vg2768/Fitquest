@@ -280,6 +280,7 @@ function formatTime(s) {
 
 function XPBar({ xp }) {
   const lvl = getLevelInfo(xp);
+  // eslint-disable-next-line no-unused-vars
   const prog = getLevelProgress(xp);
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
@@ -334,8 +335,8 @@ function Timer({ onDone }) {
         });
       }, 1000);
     } else clearInterval(ref.current);
-// eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [running]);  }, [running]);
+    return () => clearInterval(ref.current);
+  }, [running]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const pct = (secs / initial) * 283;
 
@@ -460,8 +461,8 @@ function Onboarding({ onDone }) {
 function Home({ user, stats, workoutHistory, activeProgram, setActiveProgram, navigate, addXP, programs }) {
   const todayStr = new Date().toDateString();
   const workedOutToday = workoutHistory.some(w => new Date(w.date).toDateString() === todayStr);
-// eslint-disable-next-line no-unused-vars
-  const prog = getLevelProgress(xp);  const prog = getLevelProgress(stats.xp);
+  const lvl = getLevelInfo(stats.xp);
+  const prog = getLevelProgress(stats.xp);
 
   const quote = [
     "Every rep counts. Every day matters.",
@@ -627,8 +628,8 @@ function WorkoutLogger({ activeProgram, onComplete, navigate }) {
   useEffect(() => {
     const t = setInterval(() => setElapsed(Math.floor((Date.now() - startTime) / 1000)), 1000);
     return () => clearInterval(t);
-// eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
   if (!activeProgram) return (
     <div style={{ textAlign: "center", paddingTop: 60 }}>
       <div style={{ fontSize: 48, marginBottom: 16 }}>🏋️</div>
@@ -996,8 +997,7 @@ export default function App() {
           {tab === "workout" && <WorkoutLogger activeProgram={activeProgram} onComplete={completeWorkout} navigate={setTab} />}
           {tab === "progress" && <Progress workoutHistory={workoutHistory} stats={stats} />}
           {tab === "achievements" && <Achievements stats={stats} workoutHistory={workoutHistory} />}
-          // eslint-disable-next-line no-restricted-globals
-          {tab === "profile" && <ProfileScreen user={user} stats={stats} onReset={() => { if (window.confirm("Reset all data? This cannot be undone.")) { localStorage.clear(); window.location.reload(); } }} />}
+          {tab === "profile" && <ProfileScreen user={user} stats={stats} onReset={() => { if (confirm("Reset all data? This cannot be undone.")) { localStorage.clear(); window.location.reload(); } }} />}
         </div>
       </div>
 
