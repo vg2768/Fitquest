@@ -14,7 +14,13 @@
   },
   "scripts": {
     "start": "react-scripts start",
-    "build": "react-scripts build",
+"build": "react-scripts build",
+```
+
+Actually the most reliable fix is to add an `.env` file. In VS Code check if `.env` exists at the root of your project. If it does, open it and make sure it contains:
+```
+DISABLE_ESLINT_PLUGIN=true
+CI=false
     "test": "react-scripts test",
     "eject": "react-scripts eject"
   },
