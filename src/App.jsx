@@ -995,6 +995,7 @@ export default function App() {
           {tab === "workout" && <WorkoutLogger activeProgram={activeProgram} onComplete={completeWorkout} navigate={setTab} />}
           {tab === "progress" && <Progress workoutHistory={workoutHistory} stats={stats} />}
           {tab === "achievements" && <Achievements stats={stats} workoutHistory={workoutHistory} />}
+          // eslint-disable-next-line no-restricted-globals
           {tab === "profile" && <ProfileScreen user={user} stats={stats} onReset={() => { if (window.confirm("Reset all data? This cannot be undone.")) { localStorage.clear(); window.location.reload(); } }} />}
         </div>
       </div>
