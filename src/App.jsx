@@ -756,24 +756,307 @@ function Home({ user, stats, workoutHistory, activeProgram, setActiveProgram, na
   );
 }
 
-function Programs({ user, activeProgram, setActiveProgram, navigate }) {
+function CreateProgramScreen({ onSave, onCancel, editProgram }) {
+  const { t } = useContext(ThemeContext);
+  const [step, setStep] = useState(0);
+
+  // Step 1: program info
+  const [title, setTitle] = useState(editProgram?.title || "");
+  const [emoji, setEmoji] = useState(editProgram?.emoji || "⭐");
+  const [level, setLevel] = useState(editProgram?.level || "Beginner");
+  const [weeks, setWeeks] = useState(editProgram?.weeks || 4);
+  const [desc, setDesc] = useState(editProgram?.desc || "");
+
+  // Step 2+3: workout days with exercises
+  const [workouts, setWorkouts] = useState(editProgram?.workouts || [
+    { day: "Day 1", name: "Workout 1", exercises: [] }
+  ]);
+
+  const EMOJIS = ["⭐", "💪", "🔥", "⚡", "🏆", "🌱", "🎯", "🦁"];
+  const LEVELS = ["Beginner", "Novice", "Intermediate", "Advanced", "Pro"];
+  const DAY_LABELS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+
+  const addWorkout = () => {
+    if (workouts.length >= 7) return;
+    setWorkouts(w => [...w, { day: `Day ${w.length + 1}`, name: `Workout ${w.length + 1}`, exercises: [] }]);
+  };
+
+  const removeWorkout = (idx) => setWorkouts(w => w.filter((_, i) => i !== idx));
+
+  const updateWorkout = (idx, field, val) => setWorkouts(w => w.map((wo, i) => i === idx ? { ...wo, [field]: val } : wo));
+
+  const addExercise = (wIdx) => {
+    setWorkouts(w => w.map((wo, i) => i === wIdx
+      ? { ...wo, exercises: [...wo.exercises, { name: "", sets: 3, reps: "10", rest: 60, muscle: "" }] }
+      : wo
+    ));
+  };
+
+  const removeExercise = (wIdx, eIdx) => {
+    setWorkouts(w => w.map((wo, i) => i === wIdx
+      ? { ...wo, exercises: wo.exercises.filter((_, ei) => ei !== eIdx) }
+      : wo
+    ));
+  };
+
+  const updateExercise = (wIdx, eIdx, field, val) => {
+    setWorkouts(w => w.map((wo, i) => i === wIdx
+      ? { ...wo, exercises: wo.exercises.map((ex, ei) => ei === eIdx ? { ...ex, [field]: val } : ex) }
+      : wo
+    ));
+  };
+
+  const handleSave = () => {
+    const program = {
+      id: editProgram?.id || ("custom_" + Date.now()),
+      level, tag: "Custom", gender: "All",
+      weeks: Number(weeks), days: workouts.length,
+      title, subtitle: "Custom program",
+      emoji, color: "#22C55E", dark: "#15803D",
+      desc, custom: true, workouts,
+    };
+    onSave(program);
+  };
+
+  const canProceed = [
+    title.trim().length > 0,           // step 0
+    workouts.length > 0,               // step 1
+    workouts.every(w => w.exercises.length > 0 && w.exercises.every(e => e.name.trim())), // step 2
+    true,                              // step 3 review
+  ][step];
+
+  const inputStyle = { padding: "12px 14px", background: t.card, border: `1px solid ${t.inputBorder}`, borderRadius: 12, color: t.text, fontSize: 14, width: "100%", boxSizing: "border-box" };
+  const labelStyle = { fontSize: 11, color: t.faint, textTransform: "uppercase", letterSpacing: 1, display: "block", marginBottom: 6 };
+
+  const steps = ["Program Info", "Workout Days", "Exercises", "Review"];
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+      {/* Header */}
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+        <h1 style={{ fontSize: 22, fontWeight: 800, color: t.text, fontFamily: '"DM Serif Display", serif' }}>
+          {editProgram ? "Edit Program" : "Create Program"}
+        </h1>
+        <button onClick={onCancel} style={{ background: "none", border: "none", color: t.faint, fontSize: 13, cursor: "pointer", fontWeight: 600 }}>Cancel</button>
+      </div>
+
+      {/* Step indicators */}
+      <div style={{ display: "flex", gap: 6 }}>
+        {steps.map((s, i) => (
+          <div key={i} style={{ flex: 1, textAlign: "center" }}>
+            <div style={{ height: 3, borderRadius: 99, background: i <= step ? t.accent : t.border, marginBottom: 4 }} />
+            <span style={{ fontSize: 9, color: i <= step ? t.accent : t.subtle, fontWeight: 700, textTransform: "uppercase" }}>{s}</span>
+          </div>
+        ))}
+      </div>
+
+      {/* Step 0: Program Info */}
+      {step === 0 && (
+        <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+          <div>
+            <label style={labelStyle}>Program Name *</label>
+            <input value={title} onChange={e => setTitle(e.target.value)} placeholder="e.g. My Push/Pull Split" style={inputStyle} />
+          </div>
+          <div>
+            <label style={labelStyle}>Pick an Emoji</label>
+            <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+              {EMOJIS.map(em => (
+                <button key={em} onClick={() => setEmoji(em)} style={{ fontSize: 24, background: emoji === em ? t.accentBg : t.card, border: `2px solid ${emoji === em ? t.accent : t.border}`, borderRadius: 12, padding: "8px 12px", cursor: "pointer" }}>{em}</button>
+              ))}
+            </div>
+          </div>
+          <div>
+            <label style={labelStyle}>Level</label>
+            <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+              {LEVELS.map(l => (
+                <button key={l} onClick={() => setLevel(l)} style={{ padding: "8px 14px", borderRadius: 99, fontSize: 12, fontWeight: 600, border: "none", cursor: "pointer", background: level === l ? t.accent : t.border, color: level === l ? "#fff" : t.faint }}>{l}</button>
+              ))}
+            </div>
+          </div>
+          <div>
+            <label style={labelStyle}>Duration (weeks)</label>
+            <input type="number" value={weeks} onChange={e => setWeeks(e.target.value)} min="1" max="52" style={{ ...inputStyle, width: 100 }} />
+          </div>
+          <div>
+            <label style={labelStyle}>Description (optional)</label>
+            <textarea value={desc} onChange={e => setDesc(e.target.value)} placeholder="What is this program about?" rows={3}
+              style={{ ...inputStyle, resize: "none", height: 80 }} />
+          </div>
+        </div>
+      )}
+
+      {/* Step 1: Workout Days */}
+      {step === 1 && (
+        <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+          <p style={{ fontSize: 13, color: t.muted }}>Add your workout days (up to 7). You'll add exercises in the next step.</p>
+          {workouts.map((wo, idx) => (
+            <div key={idx} style={{ background: t.card, borderRadius: 14, padding: 16, border: `1px solid ${t.border}`, boxShadow: t.shadow }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
+                <span style={{ fontSize: 13, fontWeight: 700, color: t.accent }}>Day {idx + 1}</span>
+                {workouts.length > 1 && (
+                  <button onClick={() => removeWorkout(idx)} style={{ background: "none", border: "none", color: "#ef4444", cursor: "pointer", fontSize: 16 }}>✕</button>
+                )}
+              </div>
+              <div style={{ display: "flex", gap: 8, marginBottom: 8 }}>
+                <div style={{ flex: "0 0 80px" }}>
+                  <label style={{ ...labelStyle, marginBottom: 4 }}>Day</label>
+                  <select value={wo.day} onChange={e => updateWorkout(idx, "day", e.target.value)}
+                    style={{ ...inputStyle, padding: "10px 8px" }}>
+                    {DAY_LABELS.map(d => <option key={d} value={d}>{d}</option>)}
+                    <option value="Rest">Rest</option>
+                  </select>
+                </div>
+                <div style={{ flex: 1 }}>
+                  <label style={{ ...labelStyle, marginBottom: 4 }}>Workout Name</label>
+                  <input value={wo.name} onChange={e => updateWorkout(idx, "name", e.target.value)} placeholder="e.g. Upper Body Push"
+                    style={{ ...inputStyle, padding: "10px 14px" }} />
+                </div>
+              </div>
+            </div>
+          ))}
+          {workouts.length < 7 && (
+            <button onClick={addWorkout} style={{ padding: "12px", borderRadius: 12, background: "transparent", color: t.accent, fontWeight: 700, fontSize: 14, border: `2px dashed ${t.accentBorder}`, cursor: "pointer" }}>
+              + Add Day
+            </button>
+          )}
+        </div>
+      )}
+
+      {/* Step 2: Exercises */}
+      {step === 2 && (
+        <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+          {workouts.map((wo, wIdx) => (
+            <div key={wIdx} style={{ background: t.card, borderRadius: 14, padding: 16, border: `1px solid ${t.border}`, boxShadow: t.shadow }}>
+              <p style={{ fontSize: 14, fontWeight: 700, color: t.text, marginBottom: 12 }}>{wo.day} — {wo.name}</p>
+              {wo.exercises.map((ex, eIdx) => (
+                <div key={eIdx} style={{ background: t.cardAlt, borderRadius: 10, padding: 12, marginBottom: 8, border: `1px solid ${t.border}` }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
+                    <span style={{ fontSize: 12, fontWeight: 600, color: t.accent }}>Exercise {eIdx + 1}</span>
+                    <button onClick={() => removeExercise(wIdx, eIdx)} style={{ background: "none", border: "none", color: "#ef4444", cursor: "pointer", fontSize: 14 }}>✕</button>
+                  </div>
+                  <input value={ex.name} onChange={e => updateExercise(wIdx, eIdx, "name", e.target.value)}
+                    placeholder="Exercise name *" style={{ ...inputStyle, marginBottom: 8 }} />
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr 1fr", gap: 6 }}>
+                    <div>
+                      <label style={{ ...labelStyle, fontSize: 9 }}>Sets</label>
+                      <input type="number" value={ex.sets} onChange={e => updateExercise(wIdx, eIdx, "sets", Number(e.target.value))}
+                        min="1" style={{ ...inputStyle, padding: "8px", textAlign: "center" }} />
+                    </div>
+                    <div>
+                      <label style={{ ...labelStyle, fontSize: 9 }}>Reps</label>
+                      <input value={ex.reps} onChange={e => updateExercise(wIdx, eIdx, "reps", e.target.value)}
+                        placeholder="10" style={{ ...inputStyle, padding: "8px", textAlign: "center" }} />
+                    </div>
+                    <div>
+                      <label style={{ ...labelStyle, fontSize: 9 }}>Rest(s)</label>
+                      <input type="number" value={ex.rest} onChange={e => updateExercise(wIdx, eIdx, "rest", Number(e.target.value))}
+                        min="0" style={{ ...inputStyle, padding: "8px", textAlign: "center" }} />
+                    </div>
+                    <div>
+                      <label style={{ ...labelStyle, fontSize: 9 }}>Muscle</label>
+                      <input value={ex.muscle} onChange={e => updateExercise(wIdx, eIdx, "muscle", e.target.value)}
+                        placeholder="e.g. Chest" style={{ ...inputStyle, padding: "8px" }} />
+                    </div>
+                  </div>
+                </div>
+              ))}
+              <button onClick={() => addExercise(wIdx)} style={{ width: "100%", padding: "10px", borderRadius: 10, background: "transparent", color: t.accent, fontWeight: 600, fontSize: 13, border: `1px dashed ${t.accentBorder}`, cursor: "pointer", marginTop: 4 }}>
+                + Add Exercise
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Step 3: Review */}
+      {step === 3 && (
+        <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+          <div style={{ background: t.accentBg, borderRadius: 16, padding: 20, border: `1px solid ${t.accentBorder}`, textAlign: "center" }}>
+            <div style={{ fontSize: 40, marginBottom: 8 }}>{emoji}</div>
+            <h2 style={{ fontSize: 20, fontWeight: 800, color: t.text, marginBottom: 4 }}>{title}</h2>
+            <p style={{ fontSize: 13, color: t.muted }}>{level} · {weeks} weeks · {workouts.length} days/week</p>
+            {desc && <p style={{ fontSize: 12, color: t.faint, marginTop: 8 }}>{desc}</p>}
+          </div>
+          {workouts.map((wo, i) => (
+            <div key={i} style={{ background: t.card, borderRadius: 12, padding: 14, border: `1px solid ${t.border}`, boxShadow: t.shadow }}>
+              <p style={{ fontSize: 13, fontWeight: 700, color: t.text, marginBottom: 8 }}>{wo.day} — {wo.name}</p>
+              {wo.exercises.map((ex, j) => (
+                <div key={j} style={{ display: "flex", justifyContent: "space-between", padding: "6px 0", borderBottom: j < wo.exercises.length - 1 ? `1px solid ${t.border}` : "none" }}>
+                  <span style={{ fontSize: 13, color: t.text }}>{ex.name}</span>
+                  <span style={{ fontSize: 12, color: t.faint }}>{ex.sets}×{ex.reps}</span>
+                </div>
+              ))}
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Navigation */}
+      <div style={{ display: "flex", gap: 10, marginTop: 8 }}>
+        {step > 0 && (
+          <button onClick={() => setStep(s => s - 1)} style={{ flex: 1, padding: "14px", borderRadius: 14, background: t.border, color: t.muted, fontWeight: 700, fontSize: 14, border: "none", cursor: "pointer" }}>
+            ← Back
+          </button>
+        )}
+        {step < 3 ? (
+          <button onClick={() => setStep(s => s + 1)} disabled={!canProceed}
+            style={{ flex: 2, padding: "14px", borderRadius: 14, background: canProceed ? t.accent : t.border, color: canProceed ? "#fff" : t.subtle, fontWeight: 700, fontSize: 14, border: "none", cursor: canProceed ? "pointer" : "not-allowed" }}>
+            Continue →
+          </button>
+        ) : (
+          <button onClick={handleSave} style={{ flex: 2, padding: "14px", borderRadius: 14, background: `linear-gradient(135deg,${t.accent},${t.accentLight})`, color: "#fff", fontWeight: 700, fontSize: 14, border: "none", cursor: "pointer" }}>
+            {editProgram ? "Save Changes ✓" : "Create Program 🚀"}
+          </button>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function Programs({ user, activeProgram, setActiveProgram, navigate, customPrograms, setCustomPrograms }) {
   const { t } = useContext(ThemeContext);
   const [filter, setFilter] = useState("All");
   const [gFilter, setGFilter] = useState("All");
+  const [creatingProgram, setCreatingProgram] = useState(false);
+  const [editingProgram, setEditingProgram] = useState(null);
 
   const levels = ["All", "Beginner", "Novice", "Intermediate", "Advanced", "Pro"];
   const genders = ["All", "Men", "Women"];
 
-  const filtered = PROGRAMS.filter(p =>
+  if (creatingProgram || editingProgram) {
+    return (
+      <CreateProgramScreen
+        onSave={(prog) => {
+          if (editingProgram) {
+            setCustomPrograms(prev => prev.map(p => p.id === prog.id ? prog : p));
+          } else {
+            setCustomPrograms(prev => [...prev, prog]);
+          }
+          setCreatingProgram(false);
+          setEditingProgram(null);
+        }}
+        onCancel={() => { setCreatingProgram(false); setEditingProgram(null); }}
+        editProgram={editingProgram}
+      />
+    );
+  }
+
+  const allPrograms = [...PROGRAMS, ...customPrograms];
+  const filtered = allPrograms.filter(p =>
     (filter === "All" || p.level === filter) &&
     (gFilter === "All" || p.gender === "All" || p.gender === gFilter)
   );
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
-      <div>
-        <h1 style={{ fontSize: 22, fontWeight: 800, color: t.text, fontFamily: '"DM Serif Display", serif' }}>Programs 📋</h1>
-        <p style={{ fontSize: 13, color: t.faint }}>Find the perfect plan for your goals</p>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+        <div>
+          <h1 style={{ fontSize: 22, fontWeight: 800, color: t.text, fontFamily: '"DM Serif Display", serif' }}>Programs 📋</h1>
+          <p style={{ fontSize: 13, color: t.faint }}>Find the perfect plan for your goals</p>
+        </div>
+        <button onClick={() => setCreatingProgram(true)} style={{ background: t.accent, border: "none", borderRadius: 99, padding: "8px 14px", cursor: "pointer", fontSize: 12, fontWeight: 700, color: "#fff", flexShrink: 0 }}>
+          + Create
+        </button>
       </div>
 
       <div style={{ display: "flex", gap: 8, overflowX: "auto", paddingBottom: 4 }}>
@@ -792,6 +1075,7 @@ function Programs({ user, activeProgram, setActiveProgram, navigate }) {
                 <div style={{ display: "flex", gap: 6, marginBottom: 6 }}>
                   <span style={{ background: p.dark + "66", color: p.color, fontSize: 10, fontWeight: 700, padding: "3px 8px", borderRadius: 99, textTransform: "uppercase", letterSpacing: 0.5 }}>{p.level}</span>
                   <span style={{ background: t.border, color: t.faint, fontSize: 10, fontWeight: 700, padding: "3px 8px", borderRadius: 99 }}>{p.tag}</span>
+                  {p.custom && <span style={{ background: t.accentBg, color: t.accent, fontSize: 10, fontWeight: 700, padding: "3px 8px", borderRadius: 99 }}>Custom</span>}
                 </div>
                 <h3 style={{ fontSize: 17, fontWeight: 800, color: t.text }}>{p.emoji} {p.title}</h3>
                 <p style={{ fontSize: 12, color: t.muted, marginTop: 2 }}>{p.subtitle}</p>
@@ -799,6 +1083,14 @@ function Programs({ user, activeProgram, setActiveProgram, navigate }) {
               <div style={{ textAlign: "right", flexShrink: 0, marginLeft: 12 }}>
                 <div style={{ fontSize: 12, color: t.faint }}>{p.weeks}wk</div>
                 <div style={{ fontSize: 12, color: t.faint }}>{p.days}d/wk</div>
+                {p.custom && (
+                  <div style={{ display: "flex", gap: 6, marginLeft: 8, marginTop: 6 }}>
+                    <button onClick={(e) => { e.stopPropagation(); setEditingProgram(p); }}
+                      style={{ background: t.border, border: "none", borderRadius: 8, padding: "4px 8px", cursor: "pointer", fontSize: 13 }}>✏️</button>
+                    <button onClick={(e) => { e.stopPropagation(); if (window.confirm(`Delete "${p.title}"?`)) setCustomPrograms(prev => prev.filter(cp => cp.id !== p.id)); }}
+                      style={{ background: t.border, border: "none", borderRadius: 8, padding: "4px 8px", cursor: "pointer", fontSize: 13 }}>🗑️</button>
+                  </div>
+                )}
               </div>
             </div>
             <p style={{ fontSize: 12, color: t.faint, marginBottom: 14, lineHeight: 1.6 }}>{p.desc}</p>
@@ -1150,6 +1442,7 @@ export default function App() {
   const [stats, setStats] = useLocalStorage("fq_stats", { xp: 0, streak: 0, bestStreak: 0, totalWorkouts: 0, totalVolume: 0 });
   const [workoutHistory, setWorkoutHistory] = useLocalStorage("fq_history", []);
   const [activeProgram, setActiveProgram] = useLocalStorage("fq_program", null);
+  const [customPrograms, setCustomPrograms] = useLocalStorage("fq_custom_programs", []);
   const [tab, setTab] = useState("home");
   const [notification, setNotification] = useState(null);
 
@@ -1226,7 +1519,7 @@ export default function App() {
         <div style={{ maxWidth: 480, margin: "0 auto", paddingBottom: 90 }}>
           <div style={{ padding: "20px 16px 0" }}>
             {tab === "home" && <Home user={user} stats={stats} workoutHistory={workoutHistory} activeProgram={activeProgram} setActiveProgram={setActiveProgram} navigate={setTab} addXP={addXP} programs={PROGRAMS} />}
-            {tab === "programs" && <Programs user={user} activeProgram={activeProgram} setActiveProgram={setActiveProgram} navigate={setTab} />}
+            {tab === "programs" && <Programs user={user} activeProgram={activeProgram} setActiveProgram={setActiveProgram} navigate={setTab} customPrograms={customPrograms} setCustomPrograms={setCustomPrograms} />}
             {tab === "workout" && <WorkoutLogger activeProgram={activeProgram} onComplete={completeWorkout} navigate={setTab} />}
             {tab === "progress" && <Progress workoutHistory={workoutHistory} stats={stats} />}
             {tab === "achievements" && <Achievements stats={stats} workoutHistory={workoutHistory} />}
