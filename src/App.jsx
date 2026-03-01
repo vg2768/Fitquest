@@ -1080,11 +1080,9 @@ function ProfileScreen({ user, stats, onReset, onSignOut }) {
         ))}
       </div>
 
-      {user.authProvider && (
-        <button onClick={onSignOut} style={{ padding: "14px", borderRadius: 14, background: "#1e293b", color: "#94a3b8", fontWeight: 700, fontSize: 14, border: "1px solid #334155", cursor: "pointer" }}>
-          Sign Out
-        </button>
-      )}
+      <button onClick={onSignOut} style={{ padding: "14px", borderRadius: 14, background: "#1e293b", color: "#94a3b8", fontWeight: 700, fontSize: 14, border: "1px solid #334155", cursor: "pointer" }}>
+        Sign Out
+      </button>
 
       <button onClick={onReset} style={{ padding: "14px", borderRadius: 14, background: "#1e293b", color: "#ef4444", fontWeight: 700, fontSize: 14, border: "1px solid #334155", cursor: "pointer" }}>
         Reset App Data
