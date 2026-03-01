@@ -26,12 +26,12 @@ import {
 // ─────────────────────────────────────────────────────────────────────────────
 
 const firebaseConfig = {
-  apiKey: process.env.REACT_APP_FIREBASE_API_KEY || "YOUR_API_KEY",
-  authDomain: process.env.REACT_APP_FIREBASE_AUTH_DOMAIN || "YOUR_PROJECT.firebaseapp.com",
-  projectId: process.env.REACT_APP_FIREBASE_PROJECT_ID || "YOUR_PROJECT_ID",
-  storageBucket: process.env.REACT_APP_FIREBASE_STORAGE_BUCKET || "YOUR_PROJECT.appspot.com",
-  messagingSenderId: process.env.REACT_APP_FIREBASE_MESSAGING_SENDER_ID || "YOUR_SENDER_ID",
-  appId: process.env.REACT_APP_FIREBASE_APP_ID || "YOUR_APP_ID",
+  apiKey: "AIzaSyAAPf1SFIwSpLS9Neg9KoA4-PfradRl8Ik",
+  authDomain: "fitquest-e3ba7.firebaseapp.com",
+  projectId: "fitquest-e3ba7",
+  storageBucket: "fitquest-e3ba7.firebasestorage.app",
+  messagingSenderId: "1086631536617",
+  appId: "1:1086631536617:web:93a043fddf7e5b79e64d78",
 };
 
 // Returns true when the config still has placeholder values.
