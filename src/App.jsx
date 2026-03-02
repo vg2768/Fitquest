@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useContext, createContext } from "react";
+import { useState, useEffect, useRef, useContext, createContext, useCallback, useMemo, memo, Component } from "react";
 import { signInWithGoogle, signInWithFacebook, signOutUser, isFirebaseConfigured } from "./firebase";
 
 // ─── THEME ───────────────────────────────────────────────────────────────────
@@ -292,8 +292,46 @@ function useLocalStorage(key, initial) {
     try { const s = localStorage.getItem(key); return s ? JSON.parse(s) : initial; }
     catch { return initial; }
   });
-  const set = (v) => { setVal(v); try { localStorage.setItem(key, JSON.stringify(v)); } catch {} };
+  const set = useCallback((v) => {
+    setVal(prev => {
+      const next = typeof v === "function" ? v(prev) : v;
+      try { localStorage.setItem(key, JSON.stringify(next)); } catch {}
+      return next;
+    });
+  }, [key]);
   return [val, set];
+}
+
+// Strip HTML tags and limit length to prevent stored XSS
+function sanitize(str, maxLen = 200) {
+  return String(str ?? "").replace(/<[^>]*>/g, "").replace(/[<>]/g, "").trim().slice(0, maxLen);
+}
+
+// ─── ERROR BOUNDARY ──────────────────────────────────────────────────────────
+
+class ErrorBoundary extends Component {
+  constructor(props) {
+    super(props);
+    this.state = { hasError: false };
+  }
+  static getDerivedStateFromError() {
+    return { hasError: true };
+  }
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", padding: 20, background: "#080F08", color: "#EFF7EF", textAlign: "center" }}>
+          <div>
+            <div style={{ fontSize: 48, marginBottom: 16 }}>⚠️</div>
+            <h2 style={{ fontSize: 20, fontWeight: 700, marginBottom: 8 }}>Something went wrong</h2>
+            <p style={{ color: "#7A9E7A", marginBottom: 20, fontSize: 14 }}>Please refresh to try again.</p>
+            <button onClick={() => window.location.reload()} style={{ padding: "12px 24px", borderRadius: 12, background: "#22C55E", color: "#fff", fontWeight: 700, border: "none", cursor: "pointer" }}>Refresh App</button>
+          </div>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
 }
 
 function formatTime(s) {
@@ -303,10 +341,9 @@ function formatTime(s) {
 
 // ─── COMPONENTS ──────────────────────────────────────────────────────────────
 
-function XPBar({ xp }) {
+const XPBar = memo(function XPBar({ xp }) {
   const { t } = useContext(ThemeContext);
   const lvl = getLevelInfo(xp);
-  // eslint-disable-next-line no-unused-vars
   const prog = getLevelProgress(xp);
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
@@ -319,7 +356,7 @@ function XPBar({ xp }) {
       </div>
     </div>
   );
-}
+});
 
 // eslint-disable-next-line no-unused-vars
 function Badge({ emoji, label, sub, color }) {
@@ -656,7 +693,6 @@ function Home({ user, stats, workoutHistory, activeProgram, setActiveProgram, na
   const todayStr = new Date().toDateString();
   const workedOutToday = workoutHistory.some(w => new Date(w.date).toDateString() === todayStr);
   const lvl = getLevelInfo(stats.xp);
-  const prog = getLevelProgress(stats.xp);
 
   const quote = [
     "Every rep counts. Every day matters.",
@@ -807,13 +843,27 @@ function CreateProgramScreen({ onSave, onCancel, editProgram }) {
   };
 
   const handleSave = () => {
+    const safeWorkouts = workouts.map(wo => ({
+      ...wo,
+      name: sanitize(wo.name, 80),
+      exercises: wo.exercises.map(ex => ({
+        ...ex,
+        name: sanitize(ex.name, 80),
+        reps: sanitize(ex.reps, 20),
+        muscle: sanitize(ex.muscle, 40),
+        sets: Math.max(1, Math.min(20, Number(ex.sets) || 1)),
+        rest: Math.max(0, Math.min(600, Number(ex.rest) || 0)),
+      })),
+    }));
     const program = {
       id: editProgram?.id || ("custom_" + Date.now()),
       level, tag: "Custom", gender: "All",
-      weeks: Number(weeks), days: workouts.length,
-      title, subtitle: "Custom program",
+      weeks: Math.max(1, Math.min(52, Number(weeks) || 4)),
+      days: safeWorkouts.length,
+      title: sanitize(title, 60),
+      subtitle: "Custom program",
       emoji, color: "#22C55E", dark: "#15803D",
-      desc, custom: true, workouts,
+      desc: sanitize(desc, 300), custom: true, workouts: safeWorkouts,
     };
     onSave(program);
   };
@@ -1019,9 +1069,18 @@ function Programs({ user, activeProgram, setActiveProgram, navigate, customProgr
   const [gFilter, setGFilter] = useState("All");
   const [creatingProgram, setCreatingProgram] = useState(false);
   const [editingProgram, setEditingProgram] = useState(null);
+  const [confirmDelete, setConfirmDelete] = useState(null); // program to delete
 
   const levels = ["All", "Beginner", "Novice", "Intermediate", "Advanced", "Pro"];
   const genders = ["All", "Men", "Women"];
+
+  const filtered = useMemo(() => {
+    const all = [...PROGRAMS, ...customPrograms];
+    return all.filter(p =>
+      (filter === "All" || p.level === filter) &&
+      (gFilter === "All" || p.gender === "All" || p.gender === gFilter)
+    );
+  }, [filter, gFilter, customPrograms]);
 
   if (creatingProgram || editingProgram) {
     return (
@@ -1041,14 +1100,25 @@ function Programs({ user, activeProgram, setActiveProgram, navigate, customProgr
     );
   }
 
-  const allPrograms = [...PROGRAMS, ...customPrograms];
-  const filtered = allPrograms.filter(p =>
-    (filter === "All" || p.level === filter) &&
-    (gFilter === "All" || p.gender === "All" || p.gender === gFilter)
-  );
-
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
+
+      {/* Inline delete confirmation dialog */}
+      {confirmDelete && (
+        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.6)", zIndex: 9999, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}>
+          <div style={{ background: t.card, borderRadius: 18, padding: 24, width: "100%", maxWidth: 340, border: `1px solid ${t.border}`, boxShadow: "0 20px 60px rgba(0,0,0,0.4)" }}>
+            <div style={{ fontSize: 32, textAlign: "center", marginBottom: 12 }}>🗑️</div>
+            <h3 style={{ fontSize: 16, fontWeight: 700, color: t.text, textAlign: "center", marginBottom: 8 }}>Delete Program?</h3>
+            <p style={{ fontSize: 13, color: t.faint, textAlign: "center", marginBottom: 20 }}>"{confirmDelete.title}" will be permanently removed.</p>
+            <div style={{ display: "flex", gap: 10 }}>
+              <button onClick={() => setConfirmDelete(null)} style={{ flex: 1, padding: "12px", borderRadius: 12, background: t.border, color: t.muted, fontWeight: 700, fontSize: 14, border: "none", cursor: "pointer" }}>Cancel</button>
+              <button onClick={() => { setCustomPrograms(prev => prev.filter(cp => cp.id !== confirmDelete.id)); setConfirmDelete(null); }}
+                style={{ flex: 1, padding: "12px", borderRadius: 12, background: "#ef4444", color: "#fff", fontWeight: 700, fontSize: 14, border: "none", cursor: "pointer" }}>Delete</button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
         <div>
           <h1 style={{ fontSize: 22, fontWeight: 800, color: t.text, fontFamily: '"DM Serif Display", serif' }}>Programs 📋</h1>
@@ -1087,7 +1157,7 @@ function Programs({ user, activeProgram, setActiveProgram, navigate, customProgr
                   <div style={{ display: "flex", gap: 6, marginLeft: 8, marginTop: 6 }}>
                     <button onClick={(e) => { e.stopPropagation(); setEditingProgram(p); }}
                       style={{ background: t.border, border: "none", borderRadius: 8, padding: "4px 8px", cursor: "pointer", fontSize: 13 }}>✏️</button>
-                    <button onClick={(e) => { e.stopPropagation(); if (window.confirm(`Delete "${p.title}"?`)) setCustomPrograms(prev => prev.filter(cp => cp.id !== p.id)); }}
+                    <button onClick={(e) => { e.stopPropagation(); setConfirmDelete(p); }}
                       style={{ background: t.border, border: "none", borderRadius: 8, padding: "4px 8px", cursor: "pointer", fontSize: 13 }}>🗑️</button>
                   </div>
                 )}
@@ -1445,6 +1515,7 @@ export default function App() {
   const [customPrograms, setCustomPrograms] = useLocalStorage("fq_custom_programs", []);
   const [tab, setTab] = useState("home");
   const [notification, setNotification] = useState(null);
+  const [showResetConfirm, setShowResetConfirm] = useState(false);
 
   const showNotif = (msg, icon = "🎉") => {
     setNotification({ msg, icon });
@@ -1493,9 +1564,25 @@ export default function App() {
   ];
 
   return (
+    <ErrorBoundary>
     <ThemeContext.Provider value={{ t, isDark, toggleTheme }}>
       <div style={{ minHeight: "100vh", background: t.bg, fontFamily: "'Outfit', 'Segoe UI', system-ui, sans-serif", color: t.text }}>
-        <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+
+        {/* Reset confirmation dialog */}
+        {showResetConfirm && (
+          <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.6)", zIndex: 9999, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}>
+            <div style={{ background: t.card, borderRadius: 18, padding: 24, width: "100%", maxWidth: 340, border: `1px solid ${t.border}` }}>
+              <div style={{ fontSize: 32, textAlign: "center", marginBottom: 12 }}>⚠️</div>
+              <h3 style={{ fontSize: 16, fontWeight: 700, color: t.text, textAlign: "center", marginBottom: 8 }}>Reset All Data?</h3>
+              <p style={{ fontSize: 13, color: t.faint, textAlign: "center", marginBottom: 20 }}>This will permanently delete all your workouts, stats, and programs. This cannot be undone.</p>
+              <div style={{ display: "flex", gap: 10 }}>
+                <button onClick={() => setShowResetConfirm(false)} style={{ flex: 1, padding: "12px", borderRadius: 12, background: t.border, color: t.muted, fontWeight: 700, fontSize: 14, border: "none", cursor: "pointer" }}>Cancel</button>
+                <button onClick={() => { localStorage.clear(); window.location.reload(); }}
+                  style={{ flex: 1, padding: "12px", borderRadius: 12, background: "#ef4444", color: "#fff", fontWeight: 700, fontSize: 14, border: "none", cursor: "pointer" }}>Reset</button>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Notification */}
         {notification && (
@@ -1524,7 +1611,7 @@ export default function App() {
             {tab === "progress" && <Progress workoutHistory={workoutHistory} stats={stats} />}
             {tab === "achievements" && <Achievements stats={stats} workoutHistory={workoutHistory} />}
             {tab === "profile" && <ProfileScreen user={user} stats={stats}
-              onReset={() => { if (confirm("Reset all data? This cannot be undone.")) { localStorage.clear(); window.location.reload(); } }}
+              onReset={() => { setShowResetConfirm(true); }}
               onSignOut={() => { signOutUser().catch(() => {}); localStorage.clear(); window.location.reload(); }}
             />}
           </div>
@@ -1545,5 +1632,6 @@ export default function App() {
         </div>
       </div>
     </ThemeContext.Provider>
+    </ErrorBoundary>
   );
 }

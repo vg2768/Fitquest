@@ -1,6 +1,6 @@
 {
   "name": "fitquest",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
   "dependencies": {
     "@testing-library/jest-dom": "^5.17.0",
@@ -16,6 +16,9 @@
     "start": "react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test",
+    "test:ci": "react-scripts test --watchAll=false --passWithNoTests",
+    "lint": "eslint src --ext .js,.jsx --report-unused-disable-directives",
+    "audit:check": "npm audit --audit-level=high",
     "eject": "react-scripts eject"
   },
   "eslintConfig": {
@@ -24,9 +27,10 @@
       "react-app/jest"
     ],
     "rules": {
-      "no-unused-vars": "off",
-      "react-hooks/exhaustive-deps": "off",
-      "no-restricted-globals": "off"
+      "no-unused-vars": "warn",
+      "react-hooks/exhaustive-deps": "warn",
+      "no-restricted-globals": "off",
+      "no-console": "warn"
     }
   },
   "browserslist": {
