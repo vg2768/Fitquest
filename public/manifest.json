@@ -1,6 +1,7 @@
 {
-  "short_name": "React App",
-  "name": "Create React App Sample",
+  "short_name": "FitQuest",
+  "name": "FitQuest — Gamified Fitness Tracker",
+  "description": "Track workouts, earn XP, and level up your fitness with personalized programs.",
   "icons": [
     {
       "src": "favicon.ico",
@@ -10,16 +11,24 @@
     {
       "src": "logo192.png",
       "type": "image/png",
-      "sizes": "192x192"
+      "sizes": "192x192",
+      "purpose": "any maskable"
     },
     {
       "src": "logo512.png",
       "type": "image/png",
-      "sizes": "512x512"
+      "sizes": "512x512",
+      "purpose": "any maskable"
     }
   ],
-  "start_url": ".",
+  "start_url": "/",
+  "scope": "/",
   "display": "standalone",
-  "theme_color": "#000000",
-  "background_color": "#ffffff"
+  "orientation": "portrait",
+  "theme_color": "#22C55E",
+  "background_color": "#080F08",
+  "categories": ["health", "fitness", "sports"],
+  "lang": "en",
+  "dir": "ltr",
+  "prefer_related_applications": false
 }

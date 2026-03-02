@@ -1257,14 +1257,14 @@ function WorkoutLogger({ activeProgram, onComplete, navigate }) {
 
       {/* Exercise card */}
       {ex && (
-        <div style={{ background: t.card, borderRadius: 18, padding: 22, border: `1px solid ${t.border}`, boxShadow: t.shadow }}>
-          <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 16 }}>
-            <div>
+        <div style={{ background: t.card, borderRadius: 18, padding: "16px 14px", border: `1px solid ${t.border}`, boxShadow: t.shadow }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 12 }}>
+            <div style={{ flex: 1, minWidth: 0, marginRight: 8 }}>
               <span style={{ background: t.border, color: t.muted, fontSize: 10, padding: "3px 8px", borderRadius: 99, fontWeight: 600 }}>{ex.muscle}</span>
-              <h3 style={{ fontSize: 17, fontWeight: 800, color: t.text, marginTop: 6 }}>{ex.name}</h3>
-              <p style={{ fontSize: 12, color: t.faint }}>Target: {ex.sets} sets × {ex.reps} reps</p>
+              <h3 style={{ fontSize: 16, fontWeight: 800, color: t.text, marginTop: 6, wordBreak: "break-word" }}>{ex.name}</h3>
+              <p style={{ fontSize: 12, color: t.faint }}>Target: {ex.sets} × {ex.reps}</p>
             </div>
-            <button onClick={() => setShowTimer(tv => !tv)} style={{ padding: "8px 12px", borderRadius: 10, background: t.border, color: t.faint, border: "none", cursor: "pointer", fontSize: 18 }}>⏱</button>
+            <button onClick={() => setShowTimer(tv => !tv)} style={{ minWidth: 44, minHeight: 44, padding: "0 10px", borderRadius: 10, background: t.border, color: t.faint, border: "none", cursor: "pointer", fontSize: 18, flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>⏱</button>
           </div>
 
           {showTimer && (
@@ -1275,8 +1275,8 @@ function WorkoutLogger({ activeProgram, onComplete, navigate }) {
           )}
 
           {/* Set logger */}
-          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-            <div style={{ display: "grid", gridTemplateColumns: "32px 1fr 1fr 32px", gap: 8, marginBottom: 2 }}>
+          <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+            <div style={{ display: "grid", gridTemplateColumns: "28px 1fr 1fr 40px", gap: 6, marginBottom: 2 }}>
               <span style={{ fontSize: 10, color: t.subtle, textAlign: "center" }}>SET</span>
               <span style={{ fontSize: 10, color: t.subtle, textAlign: "center" }}>KG</span>
               <span style={{ fontSize: 10, color: t.subtle, textAlign: "center" }}>REPS</span>
@@ -1286,16 +1286,16 @@ function WorkoutLogger({ activeProgram, onComplete, navigate }) {
               const key = `${ex.name}-${si}`;
               const isDone = completed[key];
               return (
-                <div key={si} style={{ display: "grid", gridTemplateColumns: "32px 1fr 1fr 32px", gap: 8, alignItems: "center", opacity: isDone ? 0.6 : 1 }}>
+                <div key={si} style={{ display: "grid", gridTemplateColumns: "28px 1fr 1fr 40px", gap: 6, alignItems: "center", opacity: isDone ? 0.6 : 1 }}>
                   <span style={{ fontSize: 13, fontWeight: 700, color: t.subtle, textAlign: "center" }}>{si + 1}</span>
-                  <input type="number" placeholder="0" value={sets[ex.name]?.[si]?.weight || ""}
+                  <input type="number" inputMode="decimal" placeholder="0" value={sets[ex.name]?.[si]?.weight || ""}
                     onChange={e => updateSet(ex.name, si, "weight", e.target.value)}
-                    style={{ padding: "10px 8px", background: isDone ? t.cardAlt : t.border, border: `1px solid ${isDone ? t.success : t.inputBorder}`, borderRadius: 10, color: t.text, fontSize: 15, fontWeight: 700, textAlign: "center" }} />
-                  <input type="number" placeholder={ex.reps} value={sets[ex.name]?.[si]?.reps || ""}
+                    style={{ padding: "12px 4px", background: isDone ? t.cardAlt : t.border, border: `1px solid ${isDone ? t.success : t.inputBorder}`, borderRadius: 10, color: t.text, fontSize: 16, fontWeight: 700, textAlign: "center", width: "100%", minWidth: 0 }} />
+                  <input type="number" inputMode="decimal" placeholder={ex.reps} value={sets[ex.name]?.[si]?.reps || ""}
                     onChange={e => updateSet(ex.name, si, "reps", e.target.value)}
-                    style={{ padding: "10px 8px", background: isDone ? t.cardAlt : t.border, border: `1px solid ${isDone ? t.success : t.inputBorder}`, borderRadius: 10, color: t.text, fontSize: 15, fontWeight: 700, textAlign: "center" }} />
+                    style={{ padding: "12px 4px", background: isDone ? t.cardAlt : t.border, border: `1px solid ${isDone ? t.success : t.inputBorder}`, borderRadius: 10, color: t.text, fontSize: 16, fontWeight: 700, textAlign: "center", width: "100%", minWidth: 0 }} />
                   <button onClick={() => { toggleComplete(ex.name, si); if (!isDone) setShowTimer(true); }}
-                    style={{ width: 32, height: 32, borderRadius: 8, background: isDone ? t.success : t.border, border: `1px solid ${isDone ? t.successText : t.inputBorder}`, cursor: "pointer", fontSize: 16 }}>
+                    style={{ width: 40, height: 44, borderRadius: 8, background: isDone ? t.success : t.border, border: `1px solid ${isDone ? t.successText : t.inputBorder}`, cursor: "pointer", fontSize: 18, display: "flex", alignItems: "center", justifyContent: "center" }}>
                     {isDone ? "✓" : ""}
                   </button>
                 </div>
@@ -1566,7 +1566,7 @@ export default function App() {
   return (
     <ErrorBoundary>
     <ThemeContext.Provider value={{ t, isDark, toggleTheme }}>
-      <div style={{ minHeight: "100vh", background: t.bg, fontFamily: "'Outfit', 'Segoe UI', system-ui, sans-serif", color: t.text }}>
+      <div style={{ minHeight: "100vh", width: "100%", overflowX: "hidden", background: t.bg, fontFamily: "'Outfit', 'Segoe UI', system-ui, sans-serif", color: t.text }}>
 
         {/* Reset confirmation dialog */}
         {showResetConfirm && (
@@ -1594,6 +1594,12 @@ export default function App() {
 
         <style>{`
           * { margin: 0; padding: 0; box-sizing: border-box; }
+          html, body { overflow-x: hidden; width: 100%; -webkit-text-size-adjust: 100%; }
+          input, textarea, select { font-size: 16px; } /* prevents iOS auto-zoom on focus */
+          button, input, select, textarea, a {
+            touch-action: manipulation;
+            -webkit-tap-highlight-color: transparent;
+          }
           input:focus, textarea:focus { outline: 1px solid #22C55E; }
           ::-webkit-scrollbar { width: 4px; height: 4px; }
           ::-webkit-scrollbar-track { background: ${t.card}; }
@@ -1603,7 +1609,7 @@ export default function App() {
         `}</style>
 
         {/* Main content */}
-        <div style={{ maxWidth: 480, margin: "0 auto", paddingBottom: 90 }}>
+        <div style={{ maxWidth: 480, margin: "0 auto", paddingBottom: 90, width: "100%" }}>
           <div style={{ padding: "20px 16px 0" }}>
             {tab === "home" && <Home user={user} stats={stats} workoutHistory={workoutHistory} activeProgram={activeProgram} setActiveProgram={setActiveProgram} navigate={setTab} addXP={addXP} programs={PROGRAMS} />}
             {tab === "programs" && <Programs user={user} activeProgram={activeProgram} setActiveProgram={setActiveProgram} navigate={setTab} customPrograms={customPrograms} setCustomPrograms={setCustomPrograms} />}
@@ -1618,14 +1624,14 @@ export default function App() {
         </div>
 
         {/* Bottom nav */}
-        <div style={{ position: "fixed", bottom: 0, left: 0, right: 0, background: t.navBg, borderTop: `1px solid ${t.navBorder}`, paddingBottom: "env(safe-area-inset-bottom)", zIndex: 100 }}>
+        <div style={{ position: "fixed", bottom: 0, left: 0, right: 0, background: t.navBg, borderTop: `1px solid ${t.navBorder}`, paddingBottom: "env(safe-area-inset-bottom, 0px)", zIndex: 100 }}>
           <div style={{ maxWidth: 480, margin: "0 auto", display: "flex", justifyContent: "space-around" }}>
             {tabs.map(tb => (
               <button key={tb.id} onClick={() => setTab(tb.id)}
-                style={{ flex: 1, padding: "10px 4px 8px", display: "flex", flexDirection: "column", alignItems: "center", gap: 3, background: "transparent", border: "none", cursor: "pointer", color: tab === tb.id ? t.accent : t.faint, transition: "color 0.2s" }}>
-                <span style={{ fontSize: tb.id === "workout" ? 20 : 18 }}>{tb.icon}</span>
-                <span style={{ fontSize: 9, fontWeight: 700, textTransform: "uppercase", letterSpacing: 0.5 }}>{tb.label}</span>
-                {tab === tb.id && <div style={{ width: 20, height: 2, background: t.accent, borderRadius: 99, marginTop: 1 }} />}
+                style={{ flex: 1, minHeight: 56, padding: "8px 2px 6px", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 2, background: "transparent", border: "none", cursor: "pointer", color: tab === tb.id ? t.accent : t.faint, transition: "color 0.2s", WebkitTapHighlightColor: "transparent" }}>
+                <span style={{ fontSize: 20 }}>{tb.icon}</span>
+                <span style={{ fontSize: 9, fontWeight: 700, textTransform: "uppercase", letterSpacing: 0.3, lineHeight: 1 }}>{tb.label}</span>
+                {tab === tb.id && <div style={{ width: 16, height: 2, background: t.accent, borderRadius: 99 }} />}
               </button>
             ))}
           </div>
