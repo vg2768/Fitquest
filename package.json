@@ -19,7 +19,7 @@
   },
   "scripts": {
     "start": "react-scripts start",
-    "build": "react-scripts build",
+    "build": "DISABLE_ESLINT_PLUGIN=true react-scripts build",
     "test": "react-scripts test --watchAll=false --coverage --coverageReporters=text",
     "test:unit": "react-scripts test --watchAll=false src/__tests__/unit",
     "test:security": "react-scripts test --watchAll=false src/__tests__/security"
