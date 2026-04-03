@@ -1,4 +1,3 @@
-/* eslint-disable */
 import { LIMITS } from '../constants';
 
 // ─── LIGHTWEIGHT SANITISER (no DOMPurify dependency for test env) ─────────────
@@ -39,7 +38,7 @@ export function sanitiseName(value) {
     .trim()
     .slice(0, LIMITS.NAME_MAX);
   // Allow letters, spaces, hyphens, apostrophes, dots only
-  return noTags.replace(/[^a-zA-Z\s'\-\.]/g, '').trim();
+  return noTags.replace(/[^a-zA-Z\s'\-.]/g, '').trim();
 }
 
 /**
