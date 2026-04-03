@@ -1,8 +1,8 @@
-import { useState, useEffect, useRef, useCallback, useReducer } from "react";
-import { PROGRAMS, RANKS, ACHIEVEMENT_DEFS, GOALS, EXPERIENCE_LEVELS, GENDERS, LIMITS } from "./constants";
+import { useState, useEffect, useRef } from "react";
+import { PROGRAMS, ACHIEVEMENT_DEFS, GOALS, EXPERIENCE_LEVELS, LIMITS } from "./constants";
 import { UserService, StatsService, HistoryService, AchievementService, ProgramService, migrateV1ToV2, resetAllData, exportUserData } from "./services/storage";
-import { awardWorkoutXP, getRankForXP, getRankProgress, calculateXP, updateStreak } from "./services/xp";
-import { sanitiseName, sanitiseString, sanitiseEnum, sanitiseNumber, sanitiseReps, sanitiseWeight, sanitiseNotes } from "./utils/sanitise";
+import { awardWorkoutXP, getRankForXP, getRankProgress } from "./services/xp";
+import { sanitiseName, sanitiseString, sanitiseEnum, sanitiseReps, sanitiseWeight } from "./utils/sanitise";
 
 // ─── THEME ────────────────────────────────────────────────────────────────────
 const T = {
@@ -12,8 +12,6 @@ const T = {
   success: "#22c55e", warning: "#f59e0b", danger: "#ef4444",
   green: "#4ade80", pink: "#f472b6", purple: "#a78bfa", blue: "#38bdf8",
 };
-
-const css = (strings, ...vals) => strings.reduce((acc, s, i) => acc + s + (vals[i] ?? ""), "");
 
 // ─── GLOBAL STYLES ────────────────────────────────────────────────────────────
 const GlobalStyle = () => (
@@ -395,7 +393,7 @@ function ProgramsScreen({ user, activeProgram, setActiveProgram, setTab }) {
 function WorkoutScreen({ activeProgram, completeWorkout }) {
   const [activeEx, setActiveEx] = useState(0);
   const [sets, setSets] = useState({});
-  const [timer, setTimer] = useState(null);
+
   const [elapsed, setElapsed] = useState(0);
   const [restTimer, setRestTimer] = useState(0);
   const [startTime] = useState(Date.now());
@@ -419,6 +417,7 @@ function WorkoutScreen({ activeProgram, completeWorkout }) {
       return r - 1;
     }), 1000);
     return () => clearInterval(restRef.current);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [restTimer > 0]);
 
   const fmt = (s) => `${String(Math.floor(s / 60)).padStart(2, "0")}:${String(s % 60).padStart(2, "0")}`;
@@ -649,6 +648,7 @@ function ProgressScreen({ stats, history }) {
 }
 
 // ─── ACHIEVEMENTS SCREEN ──────────────────────────────────────────────────────
+// eslint-disable-next-line no-unused-vars
 function AchievementsScreen({ stats }) {
   const unlocked = AchievementService.getUnlocked();
   return (
