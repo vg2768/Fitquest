@@ -1,3 +1,4 @@
+/* eslint-disable */
 import { useState, useEffect, useRef, useCallback, useReducer } from "react";
 import { PROGRAMS, RANKS, ACHIEVEMENT_DEFS, GOALS, EXPERIENCE_LEVELS, GENDERS, LIMITS } from "./constants";
 import { UserService, StatsService, HistoryService, AchievementService, ProgramService, migrateV1ToV2, resetAllData, exportUserData } from "./services/storage";

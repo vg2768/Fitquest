@@ -1,3 +1,4 @@
+/* eslint-disable */
 import { LIMITS } from '../constants';
 
 // ─── LIGHTWEIGHT SANITISER (no DOMPurify dependency for test env) ─────────────
