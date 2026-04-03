@@ -1,0 +1,17 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "FitQuest v1 (React)",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["start"],
+      "port": 3000
+    },
+    {
+      "name": "FitQuest v2 (React)",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["start", "--prefix", "fitquest-v2/fitquest-v2-deliverable"],
+      "port": 3001
+    }
+  ]
+}
