@@ -759,7 +759,7 @@ function AchievementsScreen({ stats }) {
 }
 
 // ─── PROFILE SCREEN ───────────────────────────────────────────────────────────
-function ProfileScreen({ user, stats, resetAll, authUser, onSignOut }) {
+function ProfileScreen({ user, stats, resetAll, authUser, onSignOut, onSignIn }) {
   const [confirmReset, setConfirmReset] = useState(false);
   const rank = getRankForXP(stats.xp);
 
@@ -816,9 +816,13 @@ function ProfileScreen({ user, stats, resetAll, authUser, onSignOut }) {
         <Btn onClick={handleExport} variant="secondary" style={{ justifyContent: "center" }}>
           📦 Export my data
         </Btn>
-        {authUser && (
+        {authUser ? (
           <Btn onClick={onSignOut} variant="secondary" style={{ justifyContent: "center" }}>
             Sign out
+          </Btn>
+        ) : isFirebaseConfigured && (
+          <Btn onClick={onSignIn} variant="secondary" style={{ justifyContent: "center" }}>
+            <GoogleIcon /> Sign in with Google
           </Btn>
         )}
         {!confirmReset ? (
@@ -988,7 +992,7 @@ export default function App() {
     programs: <ProgramsScreen user={user} activeProgram={activeProgram} setActiveProgram={handleSetActiveProgram} setTab={setTab} />,
     workout: <WorkoutScreen activeProgram={activeProgram} completeWorkout={handleCompleteWorkout} />,
     progress: <ProgressScreen stats={stats} history={history} />,
-    profile: <ProfileScreen user={user} stats={stats} resetAll={handleReset} authUser={authUser} onSignOut={handleSignOut} />,
+    profile: <ProfileScreen user={user} stats={stats} resetAll={handleReset} authUser={authUser} onSignOut={handleSignOut} onSignIn={handleGoogleSignIn} />,
   };
 
   return (
